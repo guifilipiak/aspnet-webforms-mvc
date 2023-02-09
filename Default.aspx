@@ -1,7 +1,6 @@
 ﻿<%@ Page Title="Home Page" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Default.aspx.cs" Inherits="AspNetWebFormsTeste._Default" %>
 
 <asp:Content ID="BodyContent" ContentPlaceHolderID="MainContent" runat="server">
-
     <asp:SqlDataSource
         ID="SqlDataSourceGridView"
         ConnectionString="<%$ ConnectionStrings:ConnectionString %>"
@@ -25,6 +24,17 @@
             <asp:PostBackTrigger ControlID="gridViewAnimais" />
         </Triggers>
         <ContentTemplate>
+            <div class="row">
+                <div class="col-md-6 pt">
+                    <button type="button" class="btn btn-info" onclick="clickBotaoSubmitAjax()">Chamar Método Server API (Ajax)</button>
+                </div>
+                <div class="col-md-3 pt">
+                    <button type="button" class="btn btn-info" onclick="clickBotaoRenderPartial()">Chamar Método Server Page (Ajax)</button>
+                </div>
+                <div class="col-md-3 pt">
+                    <div id="contentRender"></div>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-md-12">
                     <h1>Formulário DataTable</h1>
@@ -64,7 +74,6 @@
                         <RowStyle CssClass="cursor-pointer" />
                         <Columns>
                             <asp:BoundField DataField="Id" HeaderText="Id" InsertVisible="False" ReadOnly="True" SortExpression="Id" />
-                            <asp:BoundField DataField="Id" HeaderText="Id" InsertVisible="False" ReadOnly="True" SortExpression="Id" />
                             <asp:TemplateField>
                                 <HeaderTemplate>
                                     <asp:LinkButton ID="lbtnNome" runat="server" Text="Nome" CommandName="Sort" CommandArgument="Nome"></asp:LinkButton>
@@ -96,4 +105,81 @@
             </div>
         </ContentTemplate>
     </asp:UpdatePanel>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
 </asp:Content>
+<asp:Content runat="server" ContentPlaceHolderID="ScriptContent" ID="ScriptContent">
+    <script type="text/javascript">
+        function clickBotaoSubmitAjax() {
+            var url = new URL(document.URL);
+            var cep = url.searchParams.get("cep");
+            buscarEndereco(cep, function (successResult) {
+                alert("callback success");
+            }, function (failResult) {
+                alert("callback fail");
+            }, function (completedResult) {
+                alert("callback completed");
+            });
+        }
+
+        function clickBotaoRenderPartial() {
+            buscarPartialView(function (html) {
+                $("#contentRender").html(html);
+            });
+        }
+
+        function buscarEndereco(cep, callbackSuccess, callbackFail, callbackComplete) {
+            $.ajax({
+                url: "/api/Default/GetAddress",
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                data: {
+                    cep: cep
+                },
+                beforeSend: function () {
+                    alert("beforeSend");
+                },
+                success: function (result) {
+                    alert("success");
+                    if (callbackSuccess)
+                        callbackSuccess(result);
+                },
+                error: function (xhr) {
+                    alert("error");
+                    if (callbackFail)
+                        callbackFail(xhr);
+                }
+            }).done(function () {
+                alert("done");
+            }).fail(function () {
+                alert("fail");
+            });
+
+            callbackComplete();
+        }
+
+        function buscarPartialView(callback) {
+            $.ajax({
+                url: "/Page/_PartialPage",
+                //dataType: "html",
+                //contentType: "application/json; charset=utf-8",
+                data: {},
+                beforeSend: function () {
+                    alert("beforeSend");
+                },
+                success: function (result) {
+                    alert("success");
+                    if (callback)
+                        callback(result);
+                },
+                error: function (xhr) {
+                    alert("error");
+                }
+            }).done(function () {
+                alert("done");
+            }).fail(function () {
+                alert("fail");
+            });
+        }
+    </script>
+</asp:Content>
+
